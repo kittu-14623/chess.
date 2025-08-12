@@ -168,10 +168,53 @@ function isValidMove(from, to, color) {
     return false;
 }
 
+// Returns true if the king of the given color is in check
+function isKingInCheck(color) {
+    let kingPos = null;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (board[r][c] === color + 'K') kingPos = [r, c];
+        }
+    }
+    if (!kingPos) return true; // king is missing (shouldn't happen)
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] !== color) {
+                if (isValidMove([r, c], kingPos, opposite(color))) return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Returns true if the given color is checkmated
 function isCheckmate(color) {
-    // Demo: check if king is captured
-    let king = color + 'K';
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (board[r][c] === king) return false;
+    if (!isKingInCheck(color)) return false;
+    // Try all moves for color, see if any escape check
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] === color) {
+                for (let dr = 0; dr < 8; dr++) {
+                    for (let dc = 0; dc < 8; dc++) {
+                        if (isValidMove([r, c], [dr, dc], color)) {
+                            // Simulate move
+                            const backupFrom = board[r][c];
+                            const backupTo = board[dr][dc];
+                            board[dr][dc] = board[r][c];
+                            board[r][c] = null;
+                            const stillInCheck = isKingInCheck(color);
+                            // Undo move
+                            board[r][c] = backupFrom;
+                            board[dr][dc] = backupTo;
+                            if (!stillInCheck) return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
     return true;
 }
 
