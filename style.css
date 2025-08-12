@@ -1,7 +1,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #f0f0f0;
+    background: gray;
     text-align: center;
     margin: 0;
     padding: 0;
@@ -15,7 +15,7 @@ body {
     width: 90vw;
     max-width: 400px;
     aspect-ratio: 1 / 1;
-    border: 2px solid #333;
+    border: 2px solid #3333338a;
 }
 .square {
     width: 100%;
@@ -29,10 +29,10 @@ body {
     box-sizing: border-box;
 }
 .square.light {
-    background: #f0d9b5;
+    background: burlywood;
 }
 .square.dark {
-    background: #b58863;
+    background: #ebe7e4;
 }
 .selected {
     outline: 2px solid #007bff;
