@@ -73,8 +73,21 @@ function handleSquareClick(r, c) {
 }
 
 function movePiece(from, to) {
-    board[to[0]][to[1]] = board[from[0]][from[1]];
+    const movingPiece = board[from[0]][from[1]];
+    const capturedPiece = board[to[0]][to[1]];
+    board[to[0]][to[1]] = movingPiece;
     board[from[0]][from[1]] = null;
+
+    // Check if a king was captured
+    if (capturedPiece && (capturedPiece[1] === 'K')) {
+        gameOver = true;
+        const winner = movingPiece[0] === 'w' ? 'White' : 'Black';
+        document.getElementById('turn-indicator').textContent = winner + ' wins by capturing the king!';
+        showWinAnimation(winner);
+        return;
+    }
+
+    // Check for checkmate as usual
     if (isCheckmate(opposite(turn))) {
         gameOver = true;
         document.getElementById('turn-indicator').textContent = (turn === 'w' ? 'White' : 'Black') + ' wins!';
