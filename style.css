@@ -1,40 +1,91 @@
-
 body {
     font-family: Arial, sans-serif;
-    background: #f0f0f0;
+    background: gray;
     text-align: center;
+    margin: 0;
+    padding: 0;
 }
 #chessboard {
     display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     gap: 0;
     margin: 20px auto;
-    width: 400px;
-    border: 2px solid #333;
+    width: min(98vw, 98vh);
+    max-width: 100vw;
+    max-height: 80vh;
+    aspect-ratio: 1 / 1;
+    border: 2px solid #3333338a;
 }
 .square {
-    width: 50px;
-    height: 50px;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
+    font-size: min(7vw, 7vh, 32px);
     cursor: pointer;
+    box-sizing: border-box;
 }
 .square.light {
-    background: #f0d9b5;
+    background: rgba(184, 133, 66, 0.76);
 }
 .square.dark {
-    background: #b58863;
+    background:  burlywood;
 }
 .selected {
     outline: 2px solid #007bff;
 }
 #controls {
     margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+#controls button {
+    font-size: 1.1em;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #fff;
+    cursor: pointer;
+}
+#controls button:active {
+    background: #eee;
 }
 #turn-indicator {
     margin-left: 20px;
     font-weight: bold;
+    font-size: 1.1em;
+}
+.white-piece {
+    color: #e0e0e0; /* Light color for white pieces */
+    font-size: 2.5em;
+    
+}
+
+.black-piece {
+    color: #222;    /* Dark color for black pieces */
+    font-size: 2.5em;
+    
+}
+
+@media (max-width: 600px) {
+    #chessboard {
+        width: min(98vw, 98vh);
+        max-width: 100vw;
+        max-height: 80vh;
+    }
+    .square {
+        font-size: min(8vw, 8vh, 28px);
+    }
+    #controls button {
+        font-size: 1em;
+        padding: 6px 12px;
+    }
+    #turn-indicator {
+        font-size: 1em;
+        margin-left: 10px;
+    }
 }
