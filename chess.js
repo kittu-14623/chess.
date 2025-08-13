@@ -78,9 +78,18 @@ function movePiece(from, to) {
     if (isCheckmate(opposite(turn))) {
         gameOver = true;
         document.getElementById('turn-indicator').textContent = (turn === 'w' ? 'White' : 'Black') + ' wins!';
+        showWinAnimation(turn === 'w' ? 'White' : 'Black');
     } else {
         turn = opposite(turn);
     }
+}
+
+function showWinAnimation(winner) {
+    const anim = document.getElementById('win-animation');
+    const msg = anim.querySelector('.win-message');
+    msg.textContent = winner + ' Wins!';
+    anim.style.display = 'flex';
+    setTimeout(() => { anim.style.display = 'none'; }, 4000); // Hide after 4 seconds
 }
 
 function opposite(t) { return t === 'w' ? 'b' : 'w'; }
@@ -99,7 +108,6 @@ function isValidMove(from, to, color) {
 
     // Pawn moves
     if (piece[1] === 'P') {
-        // Direction
         const dir = color === 'w' ? -1 : 1;
         // Normal move
         if (dc === 0 && dr === dir && !target) return true;
@@ -120,7 +128,6 @@ function isValidMove(from, to, color) {
     // Bishop moves
     if (piece[1] === 'B') {
         if (Math.abs(dr) !== Math.abs(dc)) return false;
-        // Check path is clear
         for (let i = 1; i < Math.abs(dr); i++) {
             if (board[from[0] + i * Math.sign(dr)][from[1] + i * Math.sign(dc)]) return false;
         }
@@ -130,7 +137,6 @@ function isValidMove(from, to, color) {
     // Rook moves
     if (piece[1] === 'R') {
         if (dr !== 0 && dc !== 0) return false;
-        // Check path is clear
         if (dr === 0) {
             for (let i = 1; i < Math.abs(dc); i++) {
                 if (board[from[0]][from[1] + i * Math.sign(dc)]) return false;
@@ -146,13 +152,11 @@ function isValidMove(from, to, color) {
     // Queen moves
     if (piece[1] === 'Q') {
         if (Math.abs(dr) === Math.abs(dc)) {
-            // Diagonal like bishop
             for (let i = 1; i < Math.abs(dr); i++) {
                 if (board[from[0] + i * Math.sign(dr)][from[1] + i * Math.sign(dc)]) return false;
             }
             return true;
         } else if (dr === 0 || dc === 0) {
-            // Straight like rook
             if (dr === 0) {
                 for (let i = 1; i < Math.abs(dc); i++) {
                     if (board[from[0]][from[1] + i * Math.sign(dc)]) return false;
