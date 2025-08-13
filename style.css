@@ -90,3 +90,30 @@ body {
         margin-left: 10px;
     }
 }
+#win-animation {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 1s;
+}
+.win-message {
+    color: gold;
+    font-size: 3em;
+    font-weight: bold;
+    text-shadow: 0 0 20px #fff, 0 0 40px gold;
+    animation: popWin 1s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes popWin {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
