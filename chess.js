@@ -382,3 +382,14 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
+
+// Responsive renderer size
+function resizeRenderer() {
+    const boardDiv = document.getElementById('chessboard');
+    const size = Math.min(window.innerWidth, window.innerHeight) * 0.8; // 80% of the smaller dimension
+    renderer.setSize(size, size);
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resizeRenderer);
+resizeRenderer();
