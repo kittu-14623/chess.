@@ -6,7 +6,7 @@ const PIECE_MODELS = {
 };
 const PIECES = {
     wK: '♔', wQ: '♕', wR: '♖', wB: '♗', wN: '♘', wP: '♙',
-    bK: '♚', bQ: '♛', bR: '♜', bB: '♝', bN: '♞', bP: '♟'
+    bK: ' ♚', bQ: ' ♛', bR: '  ♜', bB: '♝', bN: '♞', bP: '♟'
 };
 
 let board, selected, turn, mode, gameOver;
@@ -35,7 +35,12 @@ function renderBoard() {
             sq.dataset.col = c;
             if (selected && selected[0] === r && selected[1] === c) sq.classList.add('selected');
             const piece = board[r][c];
-            if (piece) sq.textContent = PIECES[piece];
+            if (piece) {
+                const span = document.createElement('span');
+                span.textContent = PIECES[piece];
+                span.className = piece[0] === 'w' ? 'white-piece' : 'black-piece';
+                sq.appendChild(span);
+            }
             sq.onclick = () => handleSquareClick(r, c);
             boardDiv.appendChild(sq);
         }
@@ -81,7 +86,6 @@ function movePiece(from, to) {
 function opposite(t) { return t === 'w' ? 'b' : 'w'; }
 
 function isValidMove(from, to, color) {
-    // Full chess move validation
     const piece = board[from[0]][from[1]];
     if (!piece || piece[0] !== color) return false;
     if (from[0] === to[0] && from[1] === to[1]) return false;
@@ -89,89 +93,137 @@ function isValidMove(from, to, color) {
     if (target && target[0] === color) return false;
     const dr = to[0] - from[0];
     const dc = to[1] - from[1];
+
     // Board boundaries
     if (to[0] < 0 || to[0] > 7 || to[1] < 0 || to[1] > 7) return false;
-    // Pawn
+
+    // Pawn moves
     if (piece[1] === 'P') {
+        // Direction
         const dir = color === 'w' ? -1 : 1;
-        // Move forward
+        // Normal move
         if (dc === 0 && dr === dir && !target) return true;
-        // First move: two squares
-        if (dc === 0 && dr === 2 * dir && !target && ((color === 'w' && from[0] === 6) || (color === 'b' && from[0] === 1)) && !board[from[0] + dir][from[1]]) return true;
+        // Double move from start
+        if (dc === 0 && dr === 2 * dir && from[0] === (color === 'w' ? 6 : 1) && !target && !board[from[0] + dir][from[1]]) return true;
         // Capture
         if (Math.abs(dc) === 1 && dr === dir && target && target[0] !== color) return true;
         // TODO: En passant
         return false;
     }
-    // Knight
+
+    // Knight moves
     if (piece[1] === 'N') {
         if ((Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2)) return true;
         return false;
     }
-    // Bishop
+
+    // Bishop moves
     if (piece[1] === 'B') {
         if (Math.abs(dr) !== Math.abs(dc)) return false;
-        let stepR = dr > 0 ? 1 : -1;
-        let stepC = dc > 0 ? 1 : -1;
+        // Check path is clear
         for (let i = 1; i < Math.abs(dr); i++) {
-            if (board[from[0] + i * stepR][from[1] + i * stepC]) return false;
+            if (board[from[0] + i * Math.sign(dr)][from[1] + i * Math.sign(dc)]) return false;
         }
         return true;
     }
-    // Rook
+
+    // Rook moves
     if (piece[1] === 'R') {
         if (dr !== 0 && dc !== 0) return false;
+        // Check path is clear
         if (dr === 0) {
-            let step = dc > 0 ? 1 : -1;
             for (let i = 1; i < Math.abs(dc); i++) {
-                if (board[from[0]][from[1] + i * step]) return false;
+                if (board[from[0]][from[1] + i * Math.sign(dc)]) return false;
             }
         } else {
-            let step = dr > 0 ? 1 : -1;
             for (let i = 1; i < Math.abs(dr); i++) {
-                if (board[from[0] + i * step][from[1]]) return false;
+                if (board[from[0] + i * Math.sign(dr)][from[1]]) return false;
             }
         }
         return true;
     }
-    // Queen
+
+    // Queen moves
     if (piece[1] === 'Q') {
         if (Math.abs(dr) === Math.abs(dc)) {
-            let stepR = dr > 0 ? 1 : -1;
-            let stepC = dc > 0 ? 1 : -1;
+            // Diagonal like bishop
             for (let i = 1; i < Math.abs(dr); i++) {
-                if (board[from[0] + i * stepR][from[1] + i * stepC]) return false;
+                if (board[from[0] + i * Math.sign(dr)][from[1] + i * Math.sign(dc)]) return false;
             }
             return true;
         } else if (dr === 0 || dc === 0) {
+            // Straight like rook
             if (dr === 0) {
-                let step = dc > 0 ? 1 : -1;
                 for (let i = 1; i < Math.abs(dc); i++) {
-                    if (board[from[0]][from[1] + i * step]) return false;
+                    if (board[from[0]][from[1] + i * Math.sign(dc)]) return false;
                 }
             } else {
-                let step = dr > 0 ? 1 : -1;
                 for (let i = 1; i < Math.abs(dr); i++) {
-                    if (board[from[0] + i * step][from[1]]) return false;
+                    if (board[from[0] + i * Math.sign(dr)][from[1]]) return false;
                 }
             }
             return true;
         }
         return false;
     }
-    // King
+
+    // King moves
     if (piece[1] === 'K') {
         if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1) return true;
         // TODO: Castling
         return false;
     }
+
     return false;
 }
 
+// Returns true if the king of the given color is in check
+function isKingInCheck(color) {
+    let kingPos = null;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (board[r][c] === color + 'K') kingPos = [r, c];
+        }
+    }
+    if (!kingPos) return true; // king is missing (shouldn't happen)
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] !== color) {
+                if (isValidMove([r, c], kingPos, opposite(color))) return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Returns true if the given color is checkmated
 function isCheckmate(color) {
-    // Demo: check if king is captured
-    let king = color + 'K';
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (board[r][c] === king) return false;
+    if (!isKingInCheck(color)) return false;
+    // Try all moves for color, see if any escape check
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] === color) {
+                for (let dr = 0; dr < 8; dr++) {
+                    for (let dc = 0; dc < 8; dc++) {
+                        if (isValidMove([r, c], [dr, dc], color)) {
+                            // Simulate move
+                            const backupFrom = board[r][c];
+                            const backupTo = board[dr][dc];
+                            board[dr][dc] = board[r][c];
+                            board[r][c] = null;
+                            const stillInCheck = isKingInCheck(color);
+                            // Undo move
+                            board[r][c] = backupFrom;
+                            board[dr][dc] = backupTo;
+                            if (!stillInCheck) return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
     return true;
 }
 
@@ -243,3 +295,105 @@ document.getElementById('mode-ai').onclick = () => setMode('ai');
 // Start game
 mode = 'human';
 resetGame();
+
+// Basic 3D chess piece placeholders using Three.js
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(400, 400);
+document.getElementById('chessboard').appendChild(renderer.domElement);
+
+// Simple board
+for (let x = 0; x < 8; x++) {
+    for (let z = 0; z < 8; z++) {
+        const geometry = new THREE.BoxGeometry(1, 0.1, 1);
+        const material = new THREE.MeshPhongMaterial({ color: (x + z) % 2 === 0 ? 0xffffff : 0x444444 });
+        const square = new THREE.Mesh(geometry, material);
+        square.position.set(x - 3.5, 0, z - 3.5);
+        scene.add(square);
+    }
+}
+
+// Simple lighting
+const light = new THREE.PointLight(0xffffff, 1, 100);
+light.position.set(0, 10, 0);
+scene.add(light);
+
+// Piece colors
+const whiteMat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0 });
+const blackMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+
+// Piece shapes (placeholder)
+function createPiece(type, color) {
+    let mesh;
+    const mat = color === 'w' ? whiteMat : blackMat;
+    switch (type) {
+        case 'K': // King
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 32), mat);
+            const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.1), mat);
+            cross.position.y = 0.8;
+            mesh.add(cross);
+            break;
+        case 'Q': // Queen
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.1, 32), mat);
+            const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
+            crown.position.y = 0.7;
+            mesh.add(crown);
+            break;
+        case 'R': // Rook
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.9, 32), mat);
+            break;
+        case 'B': // Bishop
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1, 32), mat);
+            const tip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat);
+            tip.position.y = 0.7;
+            mesh.add(tip);
+            break;
+        case 'N': // Knight
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.8, 32), mat);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), mat);
+            head.position.y = 0.6;
+            head.position.z = 0.2;
+            mesh.add(head);
+            break;
+        case 'P': // Pawn
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.7, 32), mat);
+            const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), mat);
+            ball.position.y = 0.5;
+            mesh.add(ball);
+            break;
+        default:
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat);
+    }
+    return mesh;
+}
+
+// Example usage: create a white king and a black queen
+const whiteKing = createPiece('K', 'w');
+whiteKing.position.set(-2, 0.15, 0);
+scene.add(whiteKing);
+
+const blackQueen = createPiece('Q', 'b');
+blackQueen.position.set(2, 0.15, 0);
+scene.add(blackQueen);
+
+camera.position.set(0, 8, 8);
+camera.lookAt(0, 0, 0);
+
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+animate();
+
+// Responsive renderer size
+function resizeRenderer() {
+    const boardDiv = document.getElementById('chessboard');
+    const size = Math.min(window.innerWidth, window.innerHeight) * 0.8; // 80% of the smaller dimension
+    renderer.setSize(size, size);
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resizeRenderer);
+resizeRenderer();
