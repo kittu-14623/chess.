@@ -29,13 +29,13 @@ body {
     box-sizing: border-box;
 }
 .square.light {
-    background: burlywood;
+    background: rgba(184, 133, 66, 0.76);
 }
 .square.dark {
-    background: #ebe7e4;
+    background: burlywood;
 }
 .selected {
-    outline: 2px solid #007bff;
+    outline: 2px  solid #007bff;
 }
 #controls {
     margin-bottom: 10px;
