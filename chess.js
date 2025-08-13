@@ -416,3 +416,28 @@ function resizeRenderer() {
 }
 window.addEventListener('resize', resizeRenderer);
 resizeRenderer();
+function addSquareListeners(squareElement, onSquareClick) {
+    // Mouse click
+    squareElement.addEventListener('click', onSquareClick);
+
+    // Touch support
+    squareElement.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Prevents mouse event after touch
+        onSquareClick(e);
+    }, { passive: false });
+}
+
+// Example usage when rendering squares:
+function renderBoard(board) {
+    const chessboard = document.getElementById('chessboard');
+    chessboard.innerHTML = '';
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = document.createElement('div');
+            square.className = 'square';
+            // ...set square styles and piece...
+            addSquareListeners(square, () => handleSquareClick(row, col));
+            chessboard.appendChild(square);
+        }
+    }
+}
