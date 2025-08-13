@@ -1,4 +1,3 @@
-
 // Chess game logic
 // 3D model filenames for each piece (for use with Three.js or similar)
 const PIECE_MODELS = {
@@ -7,7 +6,7 @@ const PIECE_MODELS = {
 };
 const PIECES = {
     wK: '♔', wQ: '♕', wR: '♖', wB: '♗', wN: '♘', wP: '♙',
-    bK: '♚', bQ: '♛', bR: '♜', bB: '♝', bN: '♞', bP: '♟'
+    bK: ' ♚', bQ: ' ♛', bR: '  ♜', bB: '♝', bN: '♞', bP: '♟'
 };
 
 let board, selected, turn, mode, gameOver;
@@ -36,7 +35,12 @@ function renderBoard() {
             sq.dataset.col = c;
             if (selected && selected[0] === r && selected[1] === c) sq.classList.add('selected');
             const piece = board[r][c];
-            if (piece) sq.textContent = PIECES[piece];
+            if (piece) {
+                const span = document.createElement('span');
+                span.textContent = PIECES[piece];
+                span.className = piece[0] === 'w' ? 'white-piece' : 'black-piece';
+                sq.appendChild(span);
+            }
             sq.onclick = () => handleSquareClick(r, c);
             boardDiv.appendChild(sq);
         }
@@ -169,10 +173,53 @@ function isValidMove(from, to, color) {
     return false;
 }
 
+// Returns true if the king of the given color is in check
+function isKingInCheck(color) {
+    let kingPos = null;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (board[r][c] === color + 'K') kingPos = [r, c];
+        }
+    }
+    if (!kingPos) return true; // king is missing (shouldn't happen)
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] !== color) {
+                if (isValidMove([r, c], kingPos, opposite(color))) return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Returns true if the given color is checkmated
 function isCheckmate(color) {
-    // Demo: check if king is captured
-    let king = color + 'K';
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (board[r][c] === king) return false;
+    if (!isKingInCheck(color)) return false;
+    // Try all moves for color, see if any escape check
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece && piece[0] === color) {
+                for (let dr = 0; dr < 8; dr++) {
+                    for (let dc = 0; dc < 8; dc++) {
+                        if (isValidMove([r, c], [dr, dc], color)) {
+                            // Simulate move
+                            const backupFrom = board[r][c];
+                            const backupTo = board[dr][dc];
+                            board[dr][dc] = board[r][c];
+                            board[r][c] = null;
+                            const stillInCheck = isKingInCheck(color);
+                            // Undo move
+                            board[r][c] = backupFrom;
+                            board[dr][dc] = backupTo;
+                            if (!stillInCheck) return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
     return true;
 }
 
@@ -244,3 +291,94 @@ document.getElementById('mode-ai').onclick = () => setMode('ai');
 // Start game
 mode = 'human';
 resetGame();
+
+// Basic 3D chess piece placeholders using Three.js
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(400, 400);
+document.getElementById('chessboard').appendChild(renderer.domElement);
+
+// Simple board
+for (let x = 0; x < 8; x++) {
+    for (let z = 0; z < 8; z++) {
+        const geometry = new THREE.BoxGeometry(1, 0.1, 1);
+        const material = new THREE.MeshPhongMaterial({ color: (x + z) % 2 === 0 ? 0xffffff : 0x444444 });
+        const square = new THREE.Mesh(geometry, material);
+        square.position.set(x - 3.5, 0, z - 3.5);
+        scene.add(square);
+    }
+}
+
+// Simple lighting
+const light = new THREE.PointLight(0xffffff, 1, 100);
+light.position.set(0, 10, 0);
+scene.add(light);
+
+// Piece colors
+const whiteMat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0 });
+const blackMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+
+// Piece shapes (placeholder)
+function createPiece(type, color) {
+    let mesh;
+    const mat = color === 'w' ? whiteMat : blackMat;
+    switch (type) {
+        case 'K': // King
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 32), mat);
+            const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.1), mat);
+            cross.position.y = 0.8;
+            mesh.add(cross);
+            break;
+        case 'Q': // Queen
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.1, 32), mat);
+            const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
+            crown.position.y = 0.7;
+            mesh.add(crown);
+            break;
+        case 'R': // Rook
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.9, 32), mat);
+            break;
+        case 'B': // Bishop
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1, 32), mat);
+            const tip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat);
+            tip.position.y = 0.7;
+            mesh.add(tip);
+            break;
+        case 'N': // Knight
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.8, 32), mat);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), mat);
+            head.position.y = 0.6;
+            head.position.z = 0.2;
+            mesh.add(head);
+            break;
+        case 'P': // Pawn
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.7, 32), mat);
+            const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), mat);
+            ball.position.y = 0.5;
+            mesh.add(ball);
+            break;
+        default:
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat);
+    }
+    return mesh;
+}
+
+// Example usage: create a white king and a black queen
+const whiteKing = createPiece('K', 'w');
+whiteKing.position.set(-2, 0.15, 0);
+scene.add(whiteKing);
+
+const blackQueen = createPiece('Q', 'b');
+blackQueen.position.set(2, 0.15, 0);
+scene.add(blackQueen);
+
+camera.position.set(0, 8, 8);
+camera.lookAt(0, 0, 0);
+
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+animate();
