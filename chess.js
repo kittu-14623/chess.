@@ -84,6 +84,7 @@ function movePiece(from, to) {
         const winner = movingPiece[0] === 'w' ? 'White' : 'Black';
         document.getElementById('turn-indicator').textContent = winner + ' wins by capturing the king!';
         showWinAnimation(winner);
+        resizeRenderer(); // Ensure renderer matches device size
         return;
     }
 
@@ -95,6 +96,7 @@ function movePiece(from, to) {
     } else {
         turn = opposite(turn);
     }
+    resizeRenderer(); // Ensure renderer matches device size
 }
 
 function showWinAnimation(winner) {
