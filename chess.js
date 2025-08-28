@@ -6,21 +6,21 @@ const PIECE_MODELS = {
 };
 const PIECES = {
     wK: '♔', wQ: '♕', wR: '♖', wB: '♗', wN: '♘', wP: '♙',
-    bK: ' ♚', bQ: ' ♛', bR: '  ♜', bB: '♝', bN: '♞', bP: '♟'
+    bK: '♚', bQ: '♛', bR: '♜', bB: '♝', bN: '♞', bP: '♟'
 };
 
 let board, selected, turn, mode, gameOver;
 
 function initialBoard() {
     return [
-        ['bR','bN','bB','bQ','bK','bB','bN','bR'],
-        ['bP','bP','bP','bP','bP','bP','bP','bP'],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        ['wP','wP','wP','wP','wP','wP','wP','wP'],
-        ['wR','wN','wB','wQ','wK','wB','wN','wR']
+        ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+        ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+        ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
     ];
 }
 
@@ -30,7 +30,7 @@ function renderBoard() {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const sq = document.createElement('div');
-            sq.className = 'square ' + ((r+c)%2 ? 'dark' : 'light');
+            sq.className = 'square ' + ((r + c) % 2 ? 'dark' : 'light');
             sq.dataset.row = r;
             sq.dataset.col = c;
             if (selected && selected[0] === r && selected[1] === c) sq.classList.add('selected');
@@ -90,7 +90,6 @@ function movePiece(from, to) {
         const winner = movingPiece[0] === 'w' ? 'White' : 'Black';
         document.getElementById('turn-indicator').textContent = winner + ' wins by capturing the king!';
         showWinAnimation(winner);
-        resizeRenderer(); // Ensure renderer matches device size
         return;
     }
 
@@ -102,7 +101,6 @@ function movePiece(from, to) {
     } else {
         turn = opposite(turn);
     }
-    resizeRenderer(); // Ensure renderer matches device size
 }
 
 function showWinAnimation(winner) {
@@ -136,7 +134,6 @@ function isValidMove(from, to, color) {
         if (dc === 0 && dr === 2 * dir && from[0] === (color === 'w' ? 6 : 1) && !target && !board[from[0] + dir][from[1]]) return true;
         // Capture
         if (Math.abs(dc) === 1 && dr === dir && target && target[0] !== color) return true;
-        // TODO: En passant
         return false;
     }
 
@@ -195,7 +192,6 @@ function isValidMove(from, to, color) {
     // King moves
     if (piece[1] === 'K') {
         if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1) return true;
-        // TODO: Castling
         return false;
     }
 
@@ -210,7 +206,7 @@ function isKingInCheck(color) {
             if (board[r][c] === color + 'K') kingPos = [r, c];
         }
     }
-    if (!kingPos) return true; // king is missing (shouldn't happen)
+    if (!kingPos) return true;
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const piece = board[r][c];
@@ -225,7 +221,6 @@ function isKingInCheck(color) {
 // Returns true if the given color is checkmated
 function isCheckmate(color) {
     if (!isKingInCheck(color)) return false;
-    // Try all moves for color, see if any escape check
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const piece = board[r][c];
@@ -253,7 +248,6 @@ function isCheckmate(color) {
 }
 
 function aiMove() {
-    // Smarter AI: pick the best move based on material gain and safety
     const pieceValues = { K: 1000, Q: 9, R: 5, B: 3, N: 3, P: 1 };
     let moves = [];
     for (let r = 0; r < 8; r++) {
@@ -268,7 +262,6 @@ function aiMove() {
                             if (target && target[0] === 'w') {
                                 score += pieceValues[target[1]] || 0;
                             }
-                            // Simulate move and check if piece is immediately capturable
                             const original = board[dr][dc];
                             board[dr][dc] = piece;
                             board[r][c] = null;
@@ -285,7 +278,7 @@ function aiMove() {
                             }
                             board[r][c] = piece;
                             board[dr][dc] = original;
-                            if (safe) score += 0.5; // prefer safe moves
+                            if (safe) score += 0.5;
                             moves.push({ from: [r, c], to: [dr, dc], score });
                         }
                     }
@@ -321,104 +314,6 @@ document.getElementById('mode-ai').onclick = () => setMode('ai');
 mode = 'human';
 resetGame();
 
-// Basic 3D chess piece placeholders using Three.js
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(400, 400);
-document.getElementById('chessboard').appendChild(renderer.domElement);
-
-// Simple board
-for (let x = 0; x < 8; x++) {
-    for (let z = 0; z < 8; z++) {
-        const geometry = new THREE.BoxGeometry(1, 0.1, 1);
-        const material = new THREE.MeshPhongMaterial({ color: (x + z) % 2 === 0 ? 0xffffff : 0x444444 });
-        const square = new THREE.Mesh(geometry, material);
-        square.position.set(x - 3.5, 0, z - 3.5);
-        scene.add(square);
-    }
-}
-
-// Simple lighting
-const light = new THREE.PointLight(0xffffff, 1, 100);
-light.position.set(0, 10, 0);
-scene.add(light);
-
-// Piece colors
-const whiteMat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0 });
-const blackMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
-
-// Piece shapes (placeholder)
-function createPiece(type, color) {
-    let mesh;
-    const mat = color === 'w' ? whiteMat : blackMat;
-    switch (type) {
-        case 'K': // King
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 32), mat);
-            const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.1), mat);
-            cross.position.y = 0.8;
-            mesh.add(cross);
-            break;
-        case 'Q': // Queen
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.1, 32), mat);
-            const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
-            crown.position.y = 0.7;
-            mesh.add(crown);
-            break;
-        case 'R': // Rook
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.9, 32), mat);
-            break;
-        case 'B': // Bishop
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1, 32), mat);
-            const tip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat);
-            tip.position.y = 0.7;
-            mesh.add(tip);
-            break;
-        case 'N': // Knight
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.8, 32), mat);
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), mat);
-            head.position.y = 0.6;
-            head.position.z = 0.2;
-            mesh.add(head);
-            break;
-        case 'P': // Pawn
-            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.7, 32), mat);
-            const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), mat);
-            ball.position.y = 0.5;
-            mesh.add(ball);
-            break;
-        default:
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat);
-    }
-    return mesh;
-}
-
-// Example usage: create a white king and a black queen
-const whiteKing = createPiece('K', 'w');
-whiteKing.position.set(-2, 0.15, 0);
-scene.add(whiteKing);
-
-const blackQueen = createPiece('Q', 'b');
-blackQueen.position.set(2, 0.15, 0);
-scene.add(blackQueen);
-
-camera.position.set(0, 8, 8);
-camera.lookAt(0, 0, 0);
-
-function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-}
-animate();
-
-// Responsive renderer size
-function resizeRenderer() {
-    const boardDiv = document.getElementById('chessboard');
-    const size = Math.min(window.innerWidth, window.innerHeight) * 0.8; // 80% of the smaller dimension
-    renderer.setSize(size, size);
-    camera.aspect = 1;
-    camera.updateProjectionMatrix();
-}
-window.addEventListener('resize', resizeRenderer);
-resizeRenderer();
+// Note: The Three.js code has been removed as it was not integrated with the game logic.
+// The 2D rendering is now the primary and functional display method.
+// To use 3D, a full refactor of the rendering and interaction logic would be required.
