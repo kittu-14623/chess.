@@ -51,23 +51,29 @@ function renderBoard() {
 function handleSquareClick(r, c) {
     if (gameOver) return;
     const piece = board[r][c];
+    const to = [r, c];
+
     if (selected) {
-        if (selected[0] === r && selected[1] === c) {
-            selected = null;
+        const from = selected;
+        // Check for a valid move
+        if (isValidMove(from, to, turn)) {
+            movePiece(from, to);
+            selected = null; // Deselect after a successful move
             renderBoard();
-            return;
-        }
-        if (isValidMove(selected, [r, c], turn)) {
-            movePiece(selected, [r, c]);
-            selected = null;
-            renderBoard();
-            if (mode === 'ai' && turn === 'b' && !gameOver) setTimeout(aiMove, 500);
+            if (mode === 'ai' && turn === 'b' && !gameOver) {
+                setTimeout(aiMove, 500);
+            }
         } else {
-            selected = null;
+            // If the move is invalid, check if the click is on a new piece of the same color
+            if (piece && piece[0] === turn) {
+                selected = to; // Select the new piece
+            } else {
+                selected = null; // Deselect the old piece
+            }
             renderBoard();
         }
     } else if (piece && piece[0] === turn) {
-        selected = [r, c];
+        selected = to; // Select the piece on the first click
         renderBoard();
     }
 }
